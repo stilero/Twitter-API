@@ -16,7 +16,7 @@ class Curler {
     protected $_isPost;
     protected $_curlHandler;
     protected $url;
-    protected $postVars;
+    protected $postParams;
     protected $_response;
     protected $_responseInfoParts;
     protected $_cookieFile;
@@ -28,12 +28,18 @@ class Curler {
     const REQUEST_METHOD_DELETE = 'DELETE';
     const REQUEST_METHOD_CONNECT = 'CONNECT';
 
-    function __construct($url="", $postVars="", $config="") {
+    /**
+     * Sends requests to servers with curl methods
+     * @param string $url The server url to contact
+     * @param string/array $postParams The Post parameters to send. Can be either a query string or an array. For example foo=bar&baz=boom&cow=milk&php=hypertext+processor or array('foo'=>'bar')
+     * @param array $config config parameter for the class
+     */
+    function __construct($url="", $postParams="", $config="") {
         $this->_isPost = false;
         $this->url = $url;
-        if(!empty($postVars)){
+        if(!empty($postParams)){
             $this->_isPost = true;
-            $this->postVars = $postVars;
+            $this->postParams = $postParams;
         }
         
         $this->_config = 
@@ -96,7 +102,7 @@ class Curler {
     private function _definePostMode(){
         if($this->_isPost){
             curl_setopt($this->_curlHandler, CURLOPT_POST, $this->_isPost);
-            curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $this->postVars);
+            curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $this->postParams);
         }
     }
     
@@ -223,16 +229,16 @@ class Curler {
     
     /**
      * Sets the postvars to use for the request.
-     * @param string/Array $postVars The post params to use for the request.
+     * @param string/array $postVars The Post parameters to send. Can be either a query string or an array. For example foo=bar&baz=boom&cow=milk&php=hypertext+processor or array('foo'=>'bar')
      */
     public function setPostParams($postVars){
         if(is_array($postVars)){
             if(!empty($postVars)){
                 $this->_isPost = true;
-                $this->postVars = http_build_query($postVars);
+                $this->postParams = http_build_query($postVars);
             }
         }else if($postVars != ""){
-            $this->postVars = $postVars;
+            $this->postParams = $postVars;
             $this->_isPost = true;
         }
     }
