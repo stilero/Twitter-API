@@ -12,7 +12,7 @@
  */
 
 
-class OauthServer extends OauthCommunicator{
+class OauthServer extends Curler{
     
     private $OauthClient;
     private $OauthUser;
@@ -264,8 +264,8 @@ class OauthServer extends OauthCommunicator{
         if($method == 'POST'){
             $this->_isPost = true;
         }
-        $this->setPostVars($params);
+        $this->setPostParams($params);
         //$this->postVars = $params;
-        return $this->query();
+        return $this->doCurl();
     }
 }

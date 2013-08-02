@@ -1,6 +1,6 @@
 <?php
 /**
- * Communicator handles server communication usin cURL
+ * Curler handles server communication using cURL
  *
  * @version  1.3
  * @author Daniel Eliasson - joomla at stilero.com
@@ -9,7 +9,7 @@
  * @license	GPLv2
  */
 
-class OauthCommunicator {
+class Curler {
     
     protected $_config;
     protected $header;
@@ -21,8 +21,12 @@ class OauthCommunicator {
     protected $_responseInfoParts;
     protected $_cookieFile;
     protected $_isCustomRequest = false;
-    protected $_customRequestType;
+    protected $_customRequestMethod;
     const HTTP_STATUS_OK = '200';
+    const REQUEST_METHOD_POST = 'POST';
+    const REQUEST_METHOD_GET = 'GET';
+    const REQUEST_METHOD_DELETE = 'DELETE';
+    const REQUEST_METHOD_CONNECT = 'CONNECT';
 
     function __construct($url="", $postVars="", $config="") {
         $this->_isPost = false;
@@ -53,27 +57,11 @@ class OauthCommunicator {
             $this->_config = array_merge($this->_config, $config);
         }
     }
-    
-    public function query(){
-        $this->resetResponse();
-        $this->_curlHandler = curl_init(); 
-        $this->_setupCurl();
-        $this->_response = curl_exec ($this->_curlHandler);
-        $this->_responseInfoParts = curl_getinfo($this->_curlHandler); 
-        curl_close ($this->_curlHandler);
-        $this->_destroyCookieFile();
-    }
-    
-    private function _setupCurl(){
-        $this->_initCurlSettings();
-        $this->_initCurlCustomRequest();
-        $this->_initCurlPostMode();
-        $this->_initCurlHeader();
-        $this->_initCurlProxyPassword();
-        $this->_initCookieFile();
-    }
-    
-    private function _initCurlSettings(){
+        
+    /**
+     * Sets up standard Curl settings
+     */
+    private function _defineStandardSettings(){
         curl_setopt_array(
             $this->_curlHandler, 
             array(
@@ -91,25 +79,28 @@ class OauthCommunicator {
             )
         );
     }
-    private function _initCurlCustomRequest(){
+    
+    /**
+     * Initiates custom request if custom request is defined
+     */
+    private function _defineCustomRequest(){
         if($this->_isCustomRequest){
-            curl_setopt($this->_curlHandler, CURLOPT_CUSTOMREQUEST, $this->_customRequestType);
+            curl_setopt($this->_curlHandler, CURLOPT_CUSTOMREQUEST, $this->_customRequestMethod);
         }
     }
     
-    private function _initCurlPostMode(){
+    /**
+     * Defines Post mode and sets true if POST is defined.
+     */
+    //To-DO: Move postfields our to a separate method to allow posting using GET
+    private function _definePostMode(){
         if($this->_isPost){
             curl_setopt($this->_curlHandler, CURLOPT_POST, $this->_isPost);
             curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $this->postVars);
         }
     }
     
-    private function _initCurlHeader(){
-        $this->_buildHTTPHeader();
-        curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, $this->header);
-    }
-    
-    protected function _buildHTTPHeader(){
+    protected function _generateHTTPHeader(){
         if(isset($this->header)){
             return;
         }
@@ -124,15 +115,29 @@ class OauthCommunicator {
         $this->header = $header;
     }
     
-    private function _initCurlProxyPassword(){
+    /**
+     * Defines http header according to global header
+     */
+    private function _defineHeader(){
+        $this->_generateHTTPHeader();
+        curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, $this->header);
+    }
+    
+    /**
+     * Defines Proxy password
+     */
+    private function _defineProxyPassword(){
         if ($this->_config['curlProxyPassword'] !== false) {
             curl_setopt($this->_curlHandler, CURLOPT_PROXYUSERPWD, $this->_config['curl_proxyuserpwd']);
         } 
     }
     
-    private function _initCookieFile(){
+    /**
+     * Creates Cookie File is this is defined in the config
+     */
+    private function _createCookieFile(){
         if(!$this->_config['curlUseCookies']){
-            return;
+            break;
         }
         if (!defined('DS')){
             define('DS', DIRECTORY_SEPARATOR);
@@ -143,37 +148,84 @@ class OauthCommunicator {
             echo $exc->getTraceAsString();
         }
         if (!$this->_cookieFile){
-            return;
+            break;
         }
         curl_setopt($this->_curlHandler, CURLOPT_COOKIEFILE, $this->_cookieFile);
         curl_setopt($this->_curlHandler, CURLOPT_COOKIEJAR, $this->_cookieFile);
     }
     
-    private function _destroyCookieFile(){
-        if($this->_cookieFile != "" && $this->_config['curlUseCookies']){
-            unlink($this->_cookieFile);
-        }
-    }
+    /**
+     * Sets up all settings required for curling
+     */
+    private function _setupCurl(){
+        $this->_defineStandardSettings();
+        $this->_defineCustomRequest();
+        $this->_definePostMode();
+        $this->_defineHeader();
+        $this->_defineProxyPassword();
+        $this->_createCookieFile();
+    }       
     
+    /**
+     * Resets the response to start from scratch
+     */
     public function resetResponse(){
         $this->_response = '';
         $this->_responseInfoParts = array();
     }
     
+    /**
+     * Deletes the cookie file.
+     */
+    private function _deleteCookieFile(){
+        if($this->_cookieFile != "" && $this->_config['curlUseCookies']){
+            unlink($this->_cookieFile);
+        }
+    }
+    
+    /**
+     * Executes the request
+     */
+    public function doCurl(){
+        $this->resetResponse();
+        $this->_curlHandler = curl_init(); 
+        $this->_setupCurl();
+        $this->_response = curl_exec ($this->_curlHandler);
+        $this->_responseInfoParts = curl_getinfo($this->_curlHandler); 
+        curl_close ($this->_curlHandler);
+        $this->_deleteCookieFile();
+    }    
+    
+    /**
+     * Sets the URL to use for the curl request
+     * @param string $url The URL to Call
+     */
     public function setUrl($url){
         $this->url = $url;
     }
     
+    /**
+     * Set a custom HTTP header
+     * @param string $header The complete http header to use for the call
+     */
     public function setHeader($header=''){
         $this->header = $header;
     }
     
-    public function setCustomRequest($type){
+    /**
+     * Sets a custom request method.
+     * @param string $requestMethod  The method to use (GET, POST, DELETE, CONNECT...). Use the constants defined for this class.
+     */
+    public function setCustomRequest($requestMethod){
         $this->_isCustomRequest = true;
-        $this->_customRequestType = $type;
+        $this->_customRequestMethod = $requestMethod;
     }
     
-    public function setPostVars($postVars){
+    /**
+     * Sets the postvars to use for the request.
+     * @param string/Array $postVars The post params to use for the request.
+     */
+    public function setPostParams($postVars){
         if(is_array($postVars)){
             if(!empty($postVars)){
                 $this->_isPost = true;
@@ -185,19 +237,34 @@ class OauthCommunicator {
         }
     }
     
+    /**
+     * Get the server response
+     * @return string Raw server response
+     */
     public function getResponse(){
         return $this->_response;
     }
-    
-    public function getInfo(){
+    /**
+     * Get the response info after the call
+     * @return array The info parts from the server
+     */
+    public function getResponseInfo(){
         return $this->_responseInfoParts;
     }
     
-    public function getInfoHTTPCode(){
+    /**
+     * Get the response info HTTP code
+     * @return string The response HTTP code
+     */
+    public function getResponseInfoHTTPCode(){
         return $this->_responseInfoParts['http_code'];
     }
-        
-    public function isOK(){
+    
+    /**
+     * Checks if the response from the server is OK = 200
+     * @return boolean True or false
+     */
+    public function isResponseOK(){
         if ($this->_responseInfoParts['http_code'] == self::HTTP_STATUS_OK) {
             return true;
         }else{
