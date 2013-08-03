@@ -29,12 +29,13 @@ class OauthHeader {
      * @param string $oauth_version The oauth_version parameter should typically allways be 1.0 for any request.
      * @return string header string This value should be set as the Authorization header for the request.
      */
-    public static function authorizationHeader($oauth_consumer_key, $oauth_nonce, $oauth_signature, $oauth_signature_method, $oauth_timestamp, $oauth_token, $oauth_version){
-        foreach (get_defined_vars() as $key => $value) {
-            $encodedKeyValues[] = OauthHelper::safeEncode($key).'="'.OauthHelper::safeEncode($value).'"';
+    public static function authorizationHeader($oauthParams){
+        //$this->headers = array();
+        uksort($oauthParams, 'strcmp');
+        foreach ($oauthParams as $key => $value) {
+          $keyvalue[] = "{$key}=\"{$value}\"";
         }
-        $headerString = 'OAuth '.implode(', ', $encodedKeyValues);
-        return $headerString;
+        return 'OAuth ' . implode(', ', $keyvalue);
     }
     
     /**
