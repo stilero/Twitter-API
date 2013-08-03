@@ -48,7 +48,7 @@ class TwitterTweets extends OauthServer{
            } 
         }
         $apiUrl = self::API_BASE_URL.self::API_UPDATE_URL;
-        $this->request($apiUrl, $params, self::REQ_METHOD_POST);
+        $this->request($apiUrl, $params, self::REQUEST_METHOD_POST);
         return $this->getResponse();
     }
     
@@ -106,7 +106,7 @@ class TwitterTweets extends OauthServer{
         $params = array();
         //var_dump($params);exit;
         $apiUrl = self::API_BASE_URL.self::API_SHOW_URL.$id.self::API_URL_ENDING;
-        $this->request($apiUrl, $params, self::REG_METHOD_GET);
+        $this->request($apiUrl, $params, self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
     
@@ -117,7 +117,7 @@ class TwitterTweets extends OauthServer{
      */
     public function showRetweets($tweetID){
         $apiUrl = self::API_BASE_URL.self::API_SHOW_RETWEETS_URL.$tweetID.self::API_URL_ENDING;
-        $this->request($apiUrl, array(), self::REG_METHOD_GET);
+        $this->request($apiUrl, array(), self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
     
@@ -131,7 +131,7 @@ class TwitterTweets extends OauthServer{
         $medias = array('media[]' => $mediaUrls );
         $params = array_merge($statuses, $medias);
         $apiUrl = self::API_BASE_URL.self::API_UPDATE_WITH_MEDIA_URL;
-        $this->request($apiUrl, $params, self::REQ_METHOD_POST);
+        $this->request($apiUrl, $params, self::REQUEST_METHOD_POST);
         return $this->getResponse();
     }
 }

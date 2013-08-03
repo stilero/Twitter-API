@@ -4,7 +4,7 @@
  *
  * @version  1.3
  * @author Daniel Eliasson - joomla at stilero.com
- * @copyright  (C) 2012-aug-31 Stilero Webdesign http://www.stilero.com
+ * @copyright  (C) 2013-aug-01 Stilero Webdesign http://www.stilero.com
  * @category Classes
  * @license	GPLv2
  */
@@ -37,14 +37,11 @@ class Curler {
     function __construct($url="", $postParams="", $config="") {
         $this->_isPost = false;
         $this->url = $url;
-        if(!empty($postParams)){
-            $this->_isPost = true;
-            $this->postParams = $postParams;
-        }
+        $this->setPostParams($postParams);
         
         $this->_config = 
             array(
-                'curlUserAgent'         =>  'Communicator - www.stilero.com',
+                'curlUserAgent'         =>  'Curler - www.stilero.com',
                 'curlConnectTimeout'    =>  20,
                 'curlTimeout'           =>  20,
                 'curlReturnTransf'      =>  true, //return the handle as a string
@@ -190,16 +187,19 @@ class Curler {
     }
     
     /**
-     * Executes the request
+     * Executes the request and returns the raw response
+     * @return string raw server response
      */
     public function doCurl(){
         $this->resetResponse();
         $this->_curlHandler = curl_init(); 
         $this->_setupCurl();
-        $this->_response = curl_exec ($this->_curlHandler);
+        $response = curl_exec ($this->_curlHandler);
+        $this->_response = $response;
         $this->_responseInfoParts = curl_getinfo($this->_curlHandler); 
         curl_close ($this->_curlHandler);
         $this->_deleteCookieFile();
+        return $response;
     }    
     
     /**
@@ -232,14 +232,14 @@ class Curler {
      * @param string/array $postVars The Post parameters to send. Can be either a query string or an array. For example foo=bar&baz=boom&cow=milk&php=hypertext+processor or array('foo'=>'bar')
      */
     public function setPostParams($postVars){
-        if(is_array($postVars)){
-            if(!empty($postVars)){
+        if(!empty($postVars)){
+            if(is_array($postVars)){
                 $this->_isPost = true;
                 $this->postParams = http_build_query($postVars);
+            }else{
+                $this->postParams = $postVars;
+                $this->_isPost = true;
             }
-        }else if($postVars != ""){
-            $this->postParams = $postVars;
-            $this->_isPost = true;
         }
     }
     

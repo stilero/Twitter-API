@@ -31,12 +31,10 @@ class OauthServer extends Curler{
     
     const OAUTH_VERSION  = '1.0';
     const SIGN_METHOD = 'HMAC-SHA1';
-    const REQ_METHOD_POST = 'POST';
-    const REG_METHOD_GET = 'GET';
     
     
-    public function __construct($OauthClient, $OauthUser, $url = "", $postVars = "", $config = "") {
-        parent::__construct($url, $postVars, $config);
+    public function __construct(OauthClient $OauthClient, OauthUser $OauthUser, $url = "", $postParams = "", $config = "") {
+        parent::__construct($url, $postParams, $config);
         $this->OauthClient = $OauthClient;
         $this->OauthUser = $OauthUser;
     }
@@ -148,10 +146,11 @@ class OauthServer extends Curler{
     }
     
     /**
-     * Sanitizes and sets the url to use for the query
+     * Cleans out and sanitizes an url
      * @param string $url
+     * @return string sanitized url
      */
-    public function setURL($url) {
+    public function sanitizeURL($url){
         $parts = parse_url($url);
         $port = isset($parts['port']) ? $parts['port'] : '';
         $scheme = $parts['scheme'];
@@ -161,8 +160,16 @@ class OauthServer extends Curler{
         if(($scheme == 'https' && $port != '443') || ($scheme == 'http' && $port != '80')) {
             $host = "$host:$port";
         }
-        $this->url = strtolower("$scheme://$host");
-        $this->url .= $path;
+        $sanitizedURL = strtolower("$scheme://$host").$path;
+        return $sanitizedURL;
+    }
+    
+    /**
+     * Sanitizes and sets the url to use for the query
+     * @param string $url
+     */
+    public function setURL($url) {
+        $this->url = $this->sanitizeURL($url);
     }
     
     /**
@@ -254,17 +261,21 @@ class OauthServer extends Curler{
     }
     
     public function request($url, $params=array(), $method="POST", $useauth=true, $headers=array()) {
+        $this->setPostParams($params);
         $this->generateNonce();
         $this->generateTimestamp();
         if (!empty($headers)){
             $this->headers = array_merge((array)$this->headers, (array)$headers);
         }
-        $this->sign($method, $url, $params, $useauth);
+        $this->sign($method, $url, $this->postParams, $useauth);
         //$this->postVars = $this->signingParams;
+        /**
         if($method == 'POST'){
             $this->_isPost = true;
         }
-        $this->setPostParams($params);
+         * 
+         */
+        //$this->setPostParams($params);
         //$this->postVars = $params;
         return $this->doCurl();
     }

@@ -23,7 +23,7 @@ class TwitterSearch extends OauthServer{
     public function search($query){
         $apiUrl = self::API_BASE_URL.self::API_SEARCH_TWEETS_URL;
         $params = array('q='.$query);
-        $this->request($apiUrl, $params, self::REG_METHOD_GET);
+        $this->request($apiUrl, $params, self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
 }

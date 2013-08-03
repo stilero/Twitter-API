@@ -24,19 +24,19 @@ class TwitterTimelines extends OauthServer{
     
     public function mentions(){
         $apiUrl = self::API_BASE_URL.self::API_MENTIONS_URL;
-        $this->request($apiUrl, array(), self::REG_METHOD_GET);
+        $this->request($apiUrl, array(), self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
     
     public function user(){
         $apiUrl = self::API_BASE_URL.self::API_USER_TIMELINE_URL;
-        $this->request($apiUrl, array(), self::REG_METHOD_GET);
+        $this->request($apiUrl, array(), self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
     
     public function home(){
         $apiUrl = self::API_BASE_URL.self::API_HOME_TIMELINE_URL;
-        $this->request($apiUrl, array(), self::REG_METHOD_GET);
+        $this->request($apiUrl, array(), self::REQUEST_METHOD_GET);
         return $this->getResponse();
     }
 }
