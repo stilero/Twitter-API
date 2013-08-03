@@ -12,7 +12,7 @@
 class Curler {
     
     protected $_config;
-    protected $header;
+    protected $_headers;
     protected $_isPost;
     protected $_curlHandler;
     protected $url;
@@ -35,9 +35,9 @@ class Curler {
      * @param array $config config parameter for the class
      */
     function __construct($url="", $postParams="", $config="") {
-        $this->_isPost = false;
-        $this->url = $url;
-        $this->setPostParams($postParams);
+        //$this->_isPost = false;
+        //$this->url = $url;
+        //$this->setPostParams($postParams);
         
         $this->_config = 
             array(
@@ -97,25 +97,23 @@ class Curler {
      */
     //To-DO: Move postfields our to a separate method to allow posting using GET
     private function _definePostMode(){
-        if($this->_isPost){
-            curl_setopt($this->_curlHandler, CURLOPT_POST, $this->_isPost);
-            curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $this->postParams);
-        }
+        curl_setopt($this->_curlHandler, CURLOPT_POST, $this->_isPost);
+        curl_setopt($this->_curlHandler, CURLOPT_POSTFIELDS, $this->postParams);
     }
     
     protected function _generateHTTPHeader(){
-        if(isset($this->header)){
+        if(!empty($this->_headers)){
             return;
         }
-        $header[0] = "Accept: text/xml,application/xml,application/xhtml+xml,"; 
-        $header[0] .= "text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5"; 
-        $header[] = "Cache-Control: max-age=0"; 
-        $header[] = "Connection: keep-alive"; 
-        $header[] = "Keep-Alive: 300"; 
-        $header[] = "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7"; 
-        $header[] = "Accept-Language: en-us,en;q=0.5"; 
-        $header[] = "Pragma: ";  
-        $this->header = $header;
+        $headers[0] = "Accept: text/xml,application/xml,application/xhtml+xml,"; 
+        $headers[0] .= "text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5"; 
+        $headers[] = "Cache-Control: max-age=0"; 
+        $headers[] = "Connection: keep-alive"; 
+        $headers[] = "Keep-Alive: 300"; 
+        $headers[] = "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7"; 
+        $headers[] = "Accept-Language: en-us,en;q=0.5"; 
+        $headers[] = "Pragma: ";  
+        $this->_headers = $headers;
     }
     
     /**
@@ -123,7 +121,7 @@ class Curler {
      */
     private function _defineHeader(){
         $this->_generateHTTPHeader();
-        curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, $this->header);
+        curl_setopt($this->_curlHandler, CURLOPT_HTTPHEADER, $this->_headers);
     }
     
     /**
@@ -166,7 +164,7 @@ class Curler {
         $this->_definePostMode();
         $this->_defineHeader();
         $this->_defineProxyPassword();
-        $this->_createCookieFile();
+        //$this->_createCookieFile();
     }       
     
     /**
@@ -190,15 +188,16 @@ class Curler {
      * Executes the request and returns the raw response
      * @return string raw server response
      */
-    public function doCurl(){
+    public function doCurl($httpMethod = self::REQUEST_METHOD_POST){
         $this->resetResponse();
         $this->_curlHandler = curl_init(); 
+        $this->setHttpMethod($httpMethod);
         $this->_setupCurl();
         $response = curl_exec ($this->_curlHandler);
         $this->_response = $response;
         $this->_responseInfoParts = curl_getinfo($this->_curlHandler); 
         curl_close ($this->_curlHandler);
-        $this->_deleteCookieFile();
+        //$this->_deleteCookieFile();
         return $response;
     }    
     
@@ -214,8 +213,8 @@ class Curler {
      * Set a custom HTTP header
      * @param string $header The complete http header to use for the call
      */
-    public function setHeader($header=''){
-        $this->header = $header;
+    public function setHeaders($headers=array()){
+        $this->_headers = $headers;
     }
     
     /**
@@ -243,6 +242,13 @@ class Curler {
         }
     }
     
+    public function setHttpMethod($httpMethod){
+        if(strtoupper($httpMethod) == self::REQUEST_METHOD_POST){
+            $this->_isPost = true;
+        }else{
+            $this->_isPost = false;
+        }
+    }
     /**
      * Get the server response
      * @return string Raw server response

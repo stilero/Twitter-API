@@ -11,10 +11,12 @@
  * @license	GNU General Public License version 2 or later.
  * @link http://www.stilero.com
  */
-class TwitterTweets extends OauthServer{
+class TwitterTweets extends OauthRequest{
     
     const API_BASE_URL = 'https://api.twitter.com/1.1/statuses/';
+    //const API_BASE_URL = 'http://www.stilero.com/';
     const API_UPDATE_URL  = 'update.json';
+    //const API_UPDATE_URL  = 'pingtest.php';
     const API_DESTROY_URL  = 'destroy/';
     const API_RETWEET_URL  = 'retweet/';
     const API_SHOW_URL  = 'show/';
@@ -47,9 +49,11 @@ class TwitterTweets extends OauthServer{
                $params[$key] = $value;
            } 
         }
-        $apiUrl = self::API_BASE_URL.self::API_UPDATE_URL;
-        $this->request($apiUrl, $params, self::REQUEST_METHOD_POST);
-        return $this->getResponse();
+        $url = self::API_BASE_URL.self::API_UPDATE_URL;
+        return $this->query($url);
+        //return $this->send($url, $params, Curler::REQUEST_METHOD_POST, true);
+        //$this->request($apiUrl, $params, self::REQUEST_METHOD_POST);
+        //return $this->getResponse();
     }
     
     /**

@@ -24,7 +24,7 @@ class OauthServer extends Curler{
     private $signingParams;
     private $authParams;
     private $requestMethod;
-    private $headers;
+    protected $headers;
     private $authHeader;
     protected $url;
     private $data;
@@ -153,7 +153,7 @@ class OauthServer extends Curler{
     }
     
     private function setAuthHeader() {
-        $this->headers = array();
+        $this->_headers = array();
         uksort($this->authParams, 'strcmp');
         foreach ($this->authParams as $key => $value) {
           $keyvalue[] = "{$key}=\"{$value}\"";
@@ -161,12 +161,12 @@ class OauthServer extends Curler{
         $this->authHeader = 'OAuth ' . implode(', ', $keyvalue);
     }
     
-    public function setHeader($header=''){
-        $this->headers['Authorization'] = $this->authHeader;
-        foreach ($this->headers as $key => $value) {
+    public function setHeaders($header=''){
+        $this->_headers['Authorization'] = $this->authHeader;
+        foreach ($this->_headers as $key => $value) {
             $headers[] = trim($key . ': ' . $value);
         }
-        $this->header = $headers;
+        $this->_headers = $headers;
     }
     
     private function generateOauthSignature(){
@@ -188,7 +188,7 @@ class OauthServer extends Curler{
             $this->setSigningKey();
             $this->generateOauthSignature();
             $this->setAuthHeader();
-            $this->setHeader();
+            $this->setHeaders();
         }
     }
     
@@ -197,7 +197,7 @@ class OauthServer extends Curler{
         $this->nonce = OauthHelper::nonce();
         $this->timestamp = OauthHelper::timestamp();
         if (!empty($headers)){
-            $this->headers = array_merge((array)$this->headers, (array)$headers);
+            $this->_headers = array_merge((array)$this->_headers, (array)$headers);
         }
         $this->sign($method, $url, $this->postParams, $useauth);
         //$this->postVars = $this->signingParams;

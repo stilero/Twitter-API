@@ -12,6 +12,11 @@
  * @link http://www.stilero.com
  */
 class OauthHeader {
+    const USER_AGENT = 'Stilero OAuth Header Class v1.0';
+    const ACCEPT_ALL = '*/*';
+    const CONNECTION_CLOSE = 'close';
+    const CONNECTION_KEEP_ALIVE = 'Keep-Alive';
+    const CONTENT_TYPE_FORM_ENCODED = 'application/x-www-form-urlencoded;charset=UTF-8';
     
     /**
      * Generates an oAuth Header by combining the 7 parameters to a header String
@@ -24,12 +29,25 @@ class OauthHeader {
      * @param string $oauth_version The oauth_version parameter should typically allways be 1.0 for any request.
      * @return string header string This value should be set as the Authorization header for the request.
      */
-    public static function header($oauth_consumer_key, $oauth_nonce, $oauth_signature, $oauth_signature_method, $oauth_timestamp, $oauth_token, $oauth_version){
+    public static function authorizationHeader($oauth_consumer_key, $oauth_nonce, $oauth_signature, $oauth_signature_method, $oauth_timestamp, $oauth_token, $oauth_version){
         foreach (get_defined_vars() as $key => $value) {
             $encodedKeyValues[] = OauthHelper::safeEncode($key).'="'.OauthHelper::safeEncode($value).'"';
         }
         $headerString = 'OAuth '.implode(', ', $encodedKeyValues);
         return $headerString;
+    }
+    
+    /**
+     * Generates and returns an array with general HTTP headers
+     * @return array headers
+     */
+    public static function defaults(){
+        //$headers = array();
+        //$headers[] = "Accept: ".self::ACCEPT_ALL; 
+        $headers[] = "Connection: ".self::CONNECTION_KEEP_ALIVE; 
+        $headers[] = "User-Agent: ".self::USER_AGENT; 
+        $headers[] = "Content-Type: ".self::CONTENT_TYPE_FORM_ENCODED; 
+        return $headers;
     }
 }
 ?>
