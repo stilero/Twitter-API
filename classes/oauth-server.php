@@ -40,25 +40,6 @@ class OauthServer extends Curler{
     }
     
     /**
-     * Generates an unique number "NONCE"
-     * @param int $length
-     */
-    protected function generateNonce($length=12){
-        $characters = array_merge(range(0,9), range('A','Z'), range('a','z'));
-        $length = $length > count($characters) ? count($characters) : $length;
-        shuffle($characters);
-        $prefix = microtime();
-        $this->nonce = md5(substr($prefix . implode('', $characters), 0, $length));
-    }
-    
-    /**
-     * Generates a Timestamp
-     */
-    protected function generateTimestamp(){
-        $this->timestamp = time();
-    }
-    
-    /**
      * Collects and returns all default values for oauth.
      * @return Array
      */
@@ -74,46 +55,16 @@ class OauthServer extends Curler{
             $defaults['oauth_token'] = $this->OauthUser->accessToken;
         }
         foreach ($defaults as $key => $value) {
-            $_defaults[$this->safeEncode($key)] = $this->safeEncode($value);
+            $_defaults[OauthHelper::safeEncode($key)] = OauthHelper::safeEncode($value);
         }
         return $_defaults;
-    }
-    
-    /**
-     * Encodes data in an array and returns an encoded string
-     * @param Array/string $data
-     * @return string
-     */
-    private function safeEncode($data) {
-        if (is_array($data)) {
-            return array_map(array($this, 'safeEncode'), $data);
-        } else if (is_scalar($data)) {
-            return str_ireplace( array('+', '%7E'), array(' ', '~'), rawurlencode($data) );
-        } else {
-            return '';
-        }
-    }
-    
-    /**
-     * Decodes data and returns an decoded string
-     * @param Array/string $data
-     * @return string
-     */
-    private function safeDecode($data) {
-        if (is_array($data)) {
-            return array_map(array($this, 'safe_decode'), $data);
-        } else if (is_scalar($data)) {
-            return rawurldecode($data);
-        } else {
-            return '';
-        }
     }
     
     /**
      * Generates a signing key string
      */
     private function generateSigningKey() {
-        $this->signingKey = $this->safeEncode($this->OauthClient->secret) . '&' . $this->safe_encode($this->OauthUser->tokenSecret);
+        $this->signingKey = OauthHelper::safeEncode($this->OauthClient->secret) . '&' . OauthHelper::safeEncode($this->OauthUser->tokenSecret);
     }
     
     /**
@@ -136,8 +87,8 @@ class OauthServer extends Curler{
         $this->signingParams = array_merge($this->get_defaults(), (array)$params);
         uksort($this->signingParams, 'strcmp');
         foreach ($this->signingParams as $key => $value) {
-            $key = $this->safeEncode($key);
-            $value = $this->safeEncode($value);
+            $key = OauthHelper::safeEncode($key);
+            $value = OauthHelper::safeEncode($value);
             $signingParams[$key] = $value;
             $keyValue[] = "{$key}={$value}";
         }
@@ -146,30 +97,11 @@ class OauthServer extends Curler{
     }
     
     /**
-     * Cleans out and sanitizes an url
-     * @param string $url
-     * @return string sanitized url
-     */
-    public function sanitizeURL($url){
-        $parts = parse_url($url);
-        $port = isset($parts['port']) ? $parts['port'] : '';
-        $scheme = $parts['scheme'];
-        $host = $parts['host'];
-        $path = isset($parts['path']) ? $parts['path'] : '';
-        $port or $port = ($scheme == 'https') ? '443' : '80';
-        if(($scheme == 'https' && $port != '443') || ($scheme == 'http' && $port != '80')) {
-            $host = "$host:$port";
-        }
-        $sanitizedURL = strtolower("$scheme://$host").$path;
-        return $sanitizedURL;
-    }
-    
-    /**
      * Sanitizes and sets the url to use for the query
      * @param string $url
      */
     public function setURL($url) {
-        $this->url = $this->sanitizeURL($url);
+        $this->url = OauthHelper::sanitizeURL($url);
     }
     
     /**
@@ -186,8 +118,8 @@ class OauthServer extends Curler{
         //$this->signingParams['oauth_signature'] = $this->authParams['oauth_signature'];
         uksort($this->signingParams, 'strcmp');
         foreach ($this->signingParams as $key => $value) {
-            $key = $this->safeEncode($key);
-            $value = $this->safeEncode($value);
+            $key = OauthHelper::safeEncode($key);
+            $value = OauthHelper::safeEncode($value);
             $_signing_params[$key] = $value;
             $kv[] = "{$key}={$value}";
         }
@@ -212,12 +144,12 @@ class OauthServer extends Curler{
             $this->url,
             $this->signingParams
         );
-        $this->baseString = implode('&', $this->safeEncode($base));
+        $this->baseString = implode('&', OauthHelper::safeEncode($base));
     }
     
     private function setSigningKey() {
-        $this->signingKey = $this->safeEncode($this->OauthClient->secret) 
-                . '&' . $this->safeEncode($this->OauthUser->tokenSecret);
+        $this->signingKey = OauthHelper::safeEncode($this->OauthClient->secret) 
+                . '&' . OauthHelper::safeEncode($this->OauthUser->tokenSecret);
     }
     
     private function setAuthHeader() {
@@ -238,7 +170,7 @@ class OauthServer extends Curler{
     }
     
     private function generateOauthSignature(){
-        $this->authParams['oauth_signature'] = $this->safeEncode(
+        $this->authParams['oauth_signature'] = OauthHelper::safeEncode(
                 base64_encode(
                     hash_hmac(
                         'sha1', $this->baseString, $this->signingKey, true
@@ -262,8 +194,8 @@ class OauthServer extends Curler{
     
     public function request($url, $params=array(), $method="POST", $useauth=true, $headers=array()) {
         $this->setPostParams($params);
-        $this->generateNonce();
-        $this->generateTimestamp();
+        $this->nonce = OauthHelper::nonce();
+        $this->timestamp = OauthHelper::timestamp();
         if (!empty($headers)){
             $this->headers = array_merge((array)$this->headers, (array)$headers);
         }
