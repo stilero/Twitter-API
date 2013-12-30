@@ -4,18 +4,20 @@
  *
  * @version  1.0
  * @package Stilero
- * @subpackage Class Twitter
+ * @subpackage Class FB
  * @author Daniel Eliasson (joomla@stilero.com)
  * @copyright  (C) 2013-jan-06 Stilero Webdesign (www.stilero.com)
  * @license	GNU General Public License version 2 or later.
  * @link http://www.stilero.com
  */
 
+// no direct access
+defined('_JEXEC') or die('Restricted access'); 
 
-class OauthServer extends OauthCommunicator{
+class StileroOauthServer extends StileroOauthCommunicator{
     
-    private $OauthClient;
-    private $OauthUser;
+    private $OauthConsumer;
+    private $OauthAccess;
     private $baseString;
     private $signingKey;
     private $signingParams;
@@ -24,26 +26,31 @@ class OauthServer extends OauthCommunicator{
     private $authHeader;
     protected $url;
     
-    public function __construct($OauthClient, $OauthUser, $url = "", $postVars = "", $config = "") {
-        parent::__construct($url, $postVars, $config);
-        $this->OauthClient = $OauthClient;
-        $this->OauthUser = $OauthUser;
+    /**
+     * Creates a server class for oauth calls
+     * @param StileroTwitterOauthConsumer $OauthConsumer
+     * @param StileroTwitterOauthAccess $OauthAccess
+     */
+    public function __construct(StileroTwitterOauthConsumer $OauthConsumer, StileroTwitterOauthAccess $OauthAccess) {
+        parent::__construct();
+        $this->OauthConsumer = $OauthConsumer;
+        $this->OauthAccess = $OauthAccess;
     }
 
     /**
      * Prepares and sets the parameters for the call
-     * @param type $params
+     * @param array $params An array with the params
      */
-    private function generateParams($params) {
-        $oauthDefaults = OauthSignature::oauthDefaults($this->OauthClient->key, $this->OauthUser->token);
+    private function generateParams(array $params) {
+        $oauthDefaults = StileroOauthSignature::oauthDefaults($this->OauthConsumer->key, $this->OauthAccess->token);
         $this->signingParams = array_merge($oauthDefaults, (array)$params);
         if (isset($this->signingParams['oauth_signature'])) {
             unset($this->signingParams['oauth_signature']);
         }
         uksort($this->signingParams, 'strcmp');
         foreach ($this->signingParams as $key => $value) {
-            $key = OauthHelper::safeEncode($key);
-            $value = OauthHelper::safeEncode($value);
+            $key = StileroOauthEncryption::safeEncode($key);
+            $value = StileroOauthEncryption::safeEncode($value);
             $_signing_params[$key] = $value;
             $kv[] = "{$key}={$value}";
         }
@@ -64,6 +71,9 @@ class OauthServer extends OauthCommunicator{
      * @param string $header The HTTP Header
      */
     public function setHeader($header=''){
+        if($header != ''){
+            //$this->headers[] = $header;
+        }
         $this->headers['Authorization'] = $this->authHeader;
         foreach ($this->headers as $key => $value) {
             $headers[] = trim($key . ': ' . $value);
@@ -79,14 +89,14 @@ class OauthServer extends OauthCommunicator{
      * @param boolean $useauth Use auth or not
      */
     private function sign($method, $url, array $params, $useauth=true) {
-        $sanitizedURL = OauthHelper::sanitizeURL($url);
+        $sanitizedURL = StileroOauthEncryption::sanitizeURL($url);
         $this->setURL($sanitizedURL);
         $this->generateParams($params);
         if ($useauth) {
-            $this->baseString = OauthSignature::baseString($method, $sanitizedURL, $this->signingParams);
-            $this->signingKey = OauthSignature::signingKey($this->OauthClient->secret, $this->OauthUser->tokenSecret);
-            $this->authParams['oauth_signature'] = OauthSignature::generateSignature($this->baseString, $this->signingKey);
-            $this->authHeader = OauthHeader::authorizationHeader($this->authParams);
+            $this->baseString = StileroOauthSignature::baseString($method, $sanitizedURL, $this->signingParams);
+            $this->signingKey = StileroOauthSignature::signingKey($this->OauthConsumer->secret, $this->OauthAccess->tokenSecret);
+            $this->authParams['oauth_signature'] = StileroOauthSignature::generateSignature($this->baseString, $this->signingKey);
+            $this->authHeader = StileroOauthHeader::authorizationHeader($this->authParams);
             $this->setHeader();
         }
     }
@@ -100,7 +110,7 @@ class OauthServer extends OauthCommunicator{
      * @param array $headers array with custom headers
      * @return string The response
      */
-    public function sendRequest($url, $params=array(), $method="POST", $useauth=true, $headers=array()) {
+    public function sendRequest($url,array $params=array(), $method="POST", $useauth=true, array $headers=array()) {
         if (!empty($headers)){
             $this->headers = array_merge((array)$this->headers, (array)$headers);
         }

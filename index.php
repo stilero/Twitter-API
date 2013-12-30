@@ -1,30 +1,48 @@
 <?php
-/*
-require_once './classes/oauth-client.php';
-require_once './classes/oauth-communicator.php';
-require_once './classes/oauth-server.php';
-require_once './classes/oauth-user.php';
-require_once './classes/twitter-status.php';
- * 
+/**
+ * Twitter-API: Index file for testing
+ *
+ * @version  1.0
+ * @package Stilero
+ * @subpackage Twitter-API
+ * @author Daniel Eliasson <daniel at stilero.com>
+ * @copyright  (C) 2013-dec-30 Stilero Webdesign (http://www.stilero.com)
+ * @license	GNU General Public License version 2 or later.
+ * @link http://www.stilero.com
  */
-foreach (glob("./classes/*.php") as $filename)
-{
+define('_JEXEC', 1);
+define('PATH_TWITTER_LIBRARY', dirname(__FILE__).'/library/');
+
+define('PATH_TWITTER_ENDPOINTS', PATH_TWITTER_LIBRARY.'endpoints/');
+define('PATH_TWITTER_HELPERS', PATH_TWITTER_LIBRARY.'helpers/');
+define('PATH_TWITTER_OAUTH', PATH_TWITTER_LIBRARY.'oauth/');
+define('PATH_TWITTER_TWITTEROAUTH', PATH_TWITTER_LIBRARY.'twitteroauth/');
+
+foreach (glob(PATH_TWITTER_LIBRARY."*.php") as $filename){
     require_once $filename;
 }
-
-$Consumer = new OauthClient("A7NX7yIAGXuk3CDvTEDzLg", "Nnz3HrNjNCE6inhGVTjA6FWl9lleYnL2gUu6lf2PZd0");
-$User = new OauthUser("19602888-A3bNfPSzZzca6ydGmL3oN5fMyAnk0RpLtxA7vbNri", "Abkw6VwuS9rdQ54JwSchkfnCibP4gWmKkunda5dBWao");
-//$Server = new OauthServer($Consumer, $User);
-$Tweets = new TwitterTweets($Consumer, $User);
-$Search = new TwitterSearch($Consumer, $User);
-//$json = $Search->search('joomla');
-$json = $Tweets->update("Testing again #mytag");
-//$json = $Tweets->destroy('363735944530116608');
-//$json = $Tweets->retweet('1234567890');
-//$json = $Tweets->showRetweets('1234567890');
-//$json = $Tweets->home();
-$json_array = json_decode($json);
+foreach (glob(PATH_TWITTER_OAUTH."*.php") as $filename){
+    require_once $filename;
+}
+foreach (glob(PATH_TWITTER_TWITTEROAUTH."*.php") as $filename){
+    require_once $filename;
+}
+foreach (glob(PATH_TWITTER_ENDPOINTS."*.php") as $filename){
+    require_once $filename;
+}
+foreach (glob(PATH_TWITTER_HELPERS."*.php") as $filename){
+    require_once $filename;
+}
+require_once dirname(__FILE__).'/jerror.php';
+$consumerKey = 'zWUbW6ozHQPnPidtIWXjyw';
+$consumerSecret = 'xHV2gQGjmyDCX2iwBRKLq1sQ6TWJxNfqhj7Le62G26A';
+$Consumer = new StileroTwitterOauthConsumer($consumerKey, $consumerSecret);
+$token = '19602888-zGpIeTYRIkeXPiRYXK5uJUyrfx67pSstMnkeG9Q1Q';
+$tokenSecret = 'HmnBI1xX0ERQxHV9vjTO79XdCxi8LgUOYpDIihbDeDo';
+$Access = new StileroTwitterOauthAccess($token, $tokenSecret);
+$imagefile = dirname(__FILE__).'/joomla_logo_black.jpg';
+$Twitter = new StileroTwitter($consumerKey, $consumerSecret, $token, $tokenSecret);
+$json = $Twitter->Tweets->update('Testing with images');
+$response = StileroTwitterResponse::handle($json);
+var_dump($response);exit;
 ?>
-<pre>
-<?php    print_r($json_array); ?>
-</pre>

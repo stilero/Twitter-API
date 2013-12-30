@@ -11,15 +11,15 @@
  * @license	GNU General Public License version 2 or later.
  * @link http://www.stilero.com
  */
-class TwitterTimelines extends OauthServer{
+class StileroTwitterTimelines extends StileroOauthServer{
     
     const API_BASE_URL = 'https://api.twitter.com/1.1/statuses/';
     const API_MENTIONS_URL  = 'mentions_timeline.json';
     const API_USER_TIMELINE_URL  = 'user_timeline.json';
     const API_HOME_TIMELINE_URL  = 'home_timeline.json';
     
-    public function __construct($OauthClient, $OauthUser) {
-        parent::__construct($OauthClient, $OauthUser);
+    public function __construct(\StileroTwitterOauthConsumer $OauthConsumer, \StileroTwitterOauthAccess $OauthAccess) {
+        parent::__construct($OauthConsumer, $OauthAccess);
     }
     
     public function mentions(){
